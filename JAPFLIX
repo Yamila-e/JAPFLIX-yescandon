@@ -1,0 +1,106 @@
+const apiUrl = 'https://japceibal.github.io/japflix_api/movies-data.json';
+
+window.onload = async () => {
+  try {
+    const response = await fetch(apiUrl);
+    window.movieData = await response.json();
+    console.log('Datos obtenidos:', window.movieData);
+  } catch (error) {
+    console.error('Error al obtener los datos:', error);
+  }
+};
+
+document.getElementById('btnBuscar').addEventListener('click', () => {
+  const query = document.getElementById('inputBuscar').value.trim().toLowerCase();
+  if (query) buscarPeliculas(query);
+});
+
+const buscarPeliculas = (query) => {
+  const resultados = window.movieData.filter(pelicula => 
+    pelicula.title.toLowerCase().includes(query) ||
+    pelicula.genres.some(genre => genre.name.toLowerCase().includes(query)) ||
+    (pelicula.tagline && pelicula.tagline.toLowerCase().includes(query)) ||
+    pelicula.overview.toLowerCase().includes(query)
+  );
+
+  mostrarPeliculas(resultados);
+};
+
+const mostrarPeliculas = (peliculas) => {
+  const lista = document.getElementById('lista');
+  lista.innerHTML = peliculas.length ? '' : '<li>No se encontraron películas.</li>';
+
+  peliculas.forEach(pelicula => {
+    const item = document.createElement('li');
+    item.className = 'list-group-item bg-dark text-light mb-2 d-flex justify-content-between align-items-center';
+
+    item.innerHTML = `
+      <div>
+        <h5>${pelicula.title}</h5>
+        <p class="text-muted">${pelicula.tagline || 'Sin descripción'}</p>
+      </div>
+    `;
+    item.appendChild(generarEstrellas(pelicula.vote_average));
+    item.addEventListener('click', () => mostrarDetalles(pelicula));
+    lista.appendChild(item);
+  });
+};
+
+const generarEstrellas = (rating) => {
+  const contenedorEstrellas = document.createElement('div');
+  const estrellasLlenas = Math.round(rating);
+  
+  for (let i = 0; i < 10; i++) {
+    const estrella = document.createElement('i');
+    estrella.classList.add('fa', 'text-warning', i < estrellasLlenas ? 'fa-star' : 'fa-star-o');
+    contenedorEstrellas.appendChild(estrella);
+  }
+
+  return contenedorEstrellas;
+};
+
+const mostrarDetalles = (pelicula) => {
+  document.getElementById('detalle-pelicula').classList.remove('d-none');
+  document.getElementById('detalle-titulo').innerText = pelicula.title;
+  document.getElementById('detalle-overview').innerText = pelicula.overview;
+  document.getElementById('detalle-generos').innerText = pelicula.genres.map(genre => genre.name).join(' - ');
+  document.getElementById('detalle-ano').innerText = `Año: ${pelicula.release_date.split('-')[0]}`;
+  document.getElementById('detalle-runtime').innerText = `Duración: ${pelicula.runtime} mins`;
+  document.getElementById('detalle-budget').innerText = `Presupuesto: $${pelicula.budget.toLocaleString()}`;
+  document.getElementById('detalle-revenue').innerText = `Ganancias: $${pelicula.revenue.toLocaleString()}`;
+};
+
+document.getElementById('btnCerrar').addEventListener('click', () => {
+  document.getElementById('detalle-pelicula').classList.add('d-none');
+});
+/* INFO 
+const apiUrl: Define la URL de la API donde se encuentran los datos de las películas.
+window.onload: Se ejecuta cuando la página se ha cargado completamente.
+async: Permite usar await dentro de la función para esperar resultados de promesas.
+fetch(apiUrl): Hace una solicitud a la API.
+response.json(): Convierte la respuesta en formato JSON.
+window.movieData: Almacena los datos de películas en una variable global.
+console.log: Muestra los datos en la consola para verificar que se han cargado correctamente.
+try/catch: Maneja posibles errores durante la solicitud.
+ addEventListener('click', ...): Agrega un evento al botón de búsqueda para que ejecute la función al hacer clic.
+trim().toLowerCase(): Limpia espacios innecesarios y convierte la entrada a minúsculas para facilitar la búsqueda.
+if (query): Verifica que la consulta no esté vacía antes de buscar.
+filter(...): Filtra las películas basándose en si el título, los géneros, el tagline o el resumen incluyen la consulta.
+some(...): Verifica si al menos uno de los géneros coincide con la búsqueda.
+mostrarPeliculas(resultados): Llama a la función para mostrar los resultados filtrados.
+innerHTML = peliculas.length ? '' : '<li>No se encontraron películas.</li>': Limpia la lista y muestra un mensaje si no hay resultados.
+forEach(...): Itera sobre las películas encontradas para crear elementos de lista.
+createElement('li'): Crea un nuevo elemento de lista para cada película.
+innerHTML: Define el contenido HTML de cada elemento de lista, mostrando el título y el tagline de la película.
+appendChild(generarEstrellas(...)): Agrega estrellas a cada película.
+addEventListener('click', ...): Muestra los detalles de la película al hacer clic.
+Math.round(rating): Redondea la calificación para determinar cuántas estrellas llenas se deben mostrar.
+for (let i = 0; i < 10; i++): Crea un ciclo para generar 10 estrellas.
+classList.add(...): Asigna clases para representar estrellas llenas o vacías.
+appendChild(estrella): Agrega cada estrella al contenedor.
+classList.remove('d-none'): Muestra el contenedor de detalles de la película.
+innerText: Actualiza el texto de los elementos de detalle con la información de la película.
+map(...): Crea una lista de nombres de géneros, separados por " - ".
+split('-')[0]: Extrae el año de la fecha de lanzamiento.
+addEventListener('click', ...): Agrega un evento al botón de cerrar para ocultar el contenedor de detalles.
+classList.add('d-none'): Agrega una clase que oculta el contenedor.*/
